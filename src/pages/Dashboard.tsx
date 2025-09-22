@@ -13,7 +13,9 @@ import {
   Crown,
   Zap
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
+import DemoGallery from "@/components/DemoGallery";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("tools");
@@ -158,9 +160,11 @@ const Dashboard = () => {
                       </div>
                     </div>
                     
-                    <Button className="w-full btn-ai-primary">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Start Creating
+                    <Button asChild className="w-full btn-ai-primary">
+                      <Link to={tool.path}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Start Creating
+                      </Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -219,6 +223,11 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Demo Gallery Section */}
+        <div className="mt-16">
+          <DemoGallery />
         </div>
       </div>
     </div>
