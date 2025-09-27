@@ -6,23 +6,26 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Scissors, Upload, Download, Palette, Wand2 } from "lucide-react";
 import Header from "@/components/Header";
+import ImageUpload from "@/components/ImageUpload";
+import ImageComparison from "@/components/ImageComparison";
 import demoBefore from "@/assets/demo-before.jpg";
 import demoNoBg from "@/assets/demo-no-bg.png";
 
 const RemoveBackground = () => {
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [backgroundType, setBackgroundType] = useState("transparent");
   const [backgroundColor, setBackgroundColor] = useState("#ffffff");
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Demo: Use demo image instead of actual upload
-      setUploadedImage(demoBefore);
-      setProcessedImage(null);
-    }
+  const handleImageSelect = (file: File) => {
+    setUploadedImage(file);
+    setProcessedImage(null);
+  };
+
+  const handleImageRemove = () => {
+    setUploadedImage(null);
+    setProcessedImage(null);
   };
 
   const handleRemoveBackground = async () => {
@@ -79,47 +82,14 @@ const RemoveBackground = () => {
               </CardHeader>
               
               <CardContent>
-                {!uploadedImage ? (
-                  <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Drag & drop your image here, or click to select
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Works best with clear subjects (people, objects, products)
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <Button asChild variant="outline">
-                      <label htmlFor="file-upload" className="cursor-pointer">
-                        Choose Image
-                      </label>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <img 
-                      src={uploadedImage} 
-                      alt="Original"
-                      className="w-full rounded-lg"
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setUploadedImage(null);
-                        setProcessedImage(null);
-                      }}
-                      className="w-full"
-                    >
-                      Upload Different Image
-                    </Button>
-                  </div>
-                )}
+                <ImageUpload
+                  onImageSelect={handleImageSelect}
+                  onImageRemove={handleImageRemove}
+                  selectedImage={uploadedImage}
+                  isProcessing={isProcessing}
+                  acceptedFormats={["image/jpeg", "image/png", "image/webp"]}
+                  maxSize={10}
+                />
               </CardContent>
             </Card>
 
@@ -225,107 +195,20 @@ const RemoveBackground = () => {
               </CardHeader>
               
               <CardContent>
-                {!uploadedImage && !isProcessing && (
-                  <div className="aspect-[16/10] bg-muted/30 rounded-lg border-2 border-dashed border-muted flex items-center justify-center">
-                    <div className="text-center text-muted-foreground">
-                      <Scissors className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Upload an image to see background removal in action</p>
-                    </div>
-                  </div>
-                )}
-
-                {isProcessing && (
-                  <div className="aspect-[16/10] bg-muted/30 rounded-lg border-2 border-dashed border-primary/50 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                      <p className="text-primary font-medium">Removing background...</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Analyzing image and extracting subject
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {uploadedImage && !isProcessing && (
-                  <div className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Original */}
-                      <div>
-                        <div className="mb-2">
-                          <span className="text-sm font-medium">Original</span>
-                        </div>
-                        <img 
-                          src={uploadedImage} 
-                          alt="Original"
-                          className="w-full rounded-lg shadow-sm"
-                        />
-                      </div>
-
-                      {/* Processed */}
-                      <div>
-                        <div className="mb-2 flex items-center justify-between">
-                          <span className="text-sm font-medium">Background Removed</span>
-                          {processedImage && (
-                            <Badge className="bg-primary/10 text-primary">
-                              {backgroundType === "transparent" ? "PNG" : "JPG"}
-                            </Badge>
-                          )}
-                        </div>
-                        {processedImage ? (
-                          <div className="relative group">
-                            <div 
-                              className="w-full rounded-lg shadow-sm overflow-hidden"
-                              style={{
-                                backgroundImage: backgroundType === "transparent" 
-                                  ? "linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)"
-                                  : backgroundType === "custom"
-                                  ? `solid ${backgroundColor}`
-                                  : backgroundType === "white"
-                                  ? "#ffffff"
-                                  : backgroundType === "black"
-                                  ? "#000000"
-                                  : backgroundType === "gradient"
-                                  ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                                  : "transparent",
-                                backgroundSize: backgroundType === "transparent" ? "20px 20px" : "cover",
-                                backgroundPosition: backgroundType === "transparent" ? "0 0, 0 10px, 10px -10px, -10px 0px" : "center"
-                              }}
-                            >
-                              <img 
-                                src={processedImage} 
-                                alt="Background removed"
-                                className="w-full"
-                              />
-                            </div>
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                              <Button variant="secondary">
-                                <Download className="w-4 h-4 mr-2" />
-                                Download
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="aspect-square bg-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-muted">
-                            <span className="text-muted-foreground text-sm">Processed image will appear here</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {processedImage && (
-                      <div className="flex gap-4 justify-center">
-                        <Button className="btn-ai-primary">
-                          <Download className="w-4 h-4 mr-2" />
-                          Download {backgroundType === "transparent" ? "PNG" : "JPG"}
-                        </Button>
-                        <Button variant="outline">
-                          <Wand2 className="w-4 h-4 mr-2" />
-                          Try Different Background
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <ImageComparison
+                  beforeImage={uploadedImage}
+                  afterImage={processedImage}
+                  isProcessing={isProcessing}
+                  onDownload={() => {
+                    if (processedImage) {
+                      const link = document.createElement('a');
+                      link.href = processedImage;
+                      link.download = `no-background.${backgroundType === "transparent" ? "png" : "jpg"}`;
+                      link.click();
+                    }
+                  }}
+                  onReset={() => setProcessedImage(null)}
+                />
               </CardContent>
             </Card>
           </div>

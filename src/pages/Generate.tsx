@@ -6,16 +6,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wand2, Download, Sparkles, Shuffle, Settings2 } from "lucide-react";
+import { Wand2, Download, Sparkles, Shuffle, Settings2, RefreshCw } from "lucide-react";
 import Header from "@/components/Header";
+import ImageComparison from "@/components/ImageComparison";
+import ProjectManager from "@/components/ProjectManager";
 import demoGenerated from "@/assets/demo-generated.jpg";
 
 const Generate = () => {
   const [prompt, setPrompt] = useState("");
+  const [negativePrompt, setNegativePrompt] = useState("");
   const [style, setStyle] = useState("realistic");
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [showProjects, setShowProjects] = useState(false);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -127,23 +131,32 @@ const Generate = () => {
                 </div>
 
                 {/* Generate Button */}
-                <Button 
-                  onClick={handleGenerate}
-                  disabled={!prompt.trim() || isGenerating}
-                  className="w-full btn-ai-primary"
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="animate-spin w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Generate Image
-                    </>
-                  )}
-                </Button>
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={handleGenerate}
+                    disabled={!prompt.trim() || isGenerating}
+                    className="flex-1 btn-ai-primary"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-4 h-4 mr-2" />
+                        Generate Image
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowProjects(!showProjects)}
+                  >
+                    <Settings2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -160,6 +173,8 @@ const Generate = () => {
                   <Label htmlFor="negative">Negative Prompt</Label>
                   <Input 
                     id="negative"
+                    value={negativePrompt}
+                    onChange={(e) => setNegativePrompt(e.target.value)}
                     placeholder="e.g., blurry, low quality, distorted"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -190,53 +205,20 @@ const Generate = () => {
               </CardHeader>
               
               <CardContent>
-                {!generatedImage && !isGenerating && (
-                  <div className="aspect-square bg-muted/30 rounded-lg border-2 border-dashed border-muted flex items-center justify-center">
-                    <div className="text-center text-muted-foreground">
-                      <Wand2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Enter a prompt and click generate to create your image</p>
-                    </div>
-                  </div>
-                )}
-
-                {isGenerating && (
-                  <div className="aspect-square bg-muted/30 rounded-lg border-2 border-dashed border-primary/50 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                      <p className="text-primary font-medium">Creating your image...</p>
-                      <p className="text-sm text-muted-foreground mt-1">This may take a few seconds</p>
-                    </div>
-                  </div>
-                )}
-
-                {generatedImage && (
-                  <div className="space-y-4">
-                    <div className="relative group">
-                      <img 
-                        src={generatedImage} 
-                        alt="Generated artwork"
-                        className="w-full rounded-lg shadow-lg"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                        <Button variant="secondary">
-                          <Download className="w-4 h-4 mr-2" />
-                          Download
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button className="flex-1 btn-ai-primary">
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
-                      <Button variant="outline">
-                        <Shuffle className="w-4 h-4 mr-2" />
-                        Variations
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <ImageComparison
+                  beforeImage={null}
+                  afterImage={generatedImage}
+                  isProcessing={isGenerating}
+                  onDownload={() => {
+                    if (generatedImage) {
+                      const link = document.createElement('a');
+                      link.href = generatedImage;
+                      link.download = 'generated-image.jpg';
+                      link.click();
+                    }
+                  }}
+                  onReset={() => setGeneratedImage(null)}
+                />
               </CardContent>
             </Card>
 
@@ -253,6 +235,23 @@ const Generate = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Project Manager */}
+            {showProjects && (
+              <ProjectManager
+                onSaveProject={(project) => {
+                  console.log('Saving project:', project);
+                }}
+                onLoadProject={(project) => {
+                  console.log('Loading project:', project);
+                  setPrompt(project.settings?.prompt || '');
+                  setStyle(project.settings?.style || 'realistic');
+                }}
+                onDeleteProject={(id) => {
+                  console.log('Deleting project:', id);
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

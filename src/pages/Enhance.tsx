@@ -6,11 +6,13 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Upload, Download, RotateCcw, Zap } from "lucide-react";
 import Header from "@/components/Header";
+import ImageUpload from "@/components/ImageUpload";
+import ImageComparison from "@/components/ImageComparison";
 import demoBefore from "@/assets/demo-before.jpg";
 import demoEnhanced from "@/assets/demo-enhanced.jpg";
 
 const Enhance = () => {
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [enhancedImage, setEnhancedImage] = useState<string | null>(null);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [brightness, setBrightness] = useState([100]);
@@ -18,13 +20,14 @@ const Enhance = () => {
   const [sharpness, setSharpness] = useState([100]);
   const [upscale, setUpscale] = useState([2]);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Demo: Use demo image instead of actual upload
-      setUploadedImage(demoBefore);
-      setEnhancedImage(null);
-    }
+  const handleImageSelect = (file: File) => {
+    setUploadedImage(file);
+    setEnhancedImage(null);
+  };
+
+  const handleImageRemove = () => {
+    setUploadedImage(null);
+    setEnhancedImage(null);
   };
 
   const handleEnhance = async () => {
@@ -80,44 +83,14 @@ const Enhance = () => {
               </CardHeader>
               
               <CardContent>
-                {!uploadedImage ? (
-                  <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Drag & drop your image here, or click to select
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <Button asChild variant="outline">
-                      <label htmlFor="file-upload" className="cursor-pointer">
-                        Choose Image
-                      </label>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <img 
-                      src={uploadedImage} 
-                      alt="Original"
-                      className="w-full rounded-lg"
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setUploadedImage(null);
-                        setEnhancedImage(null);
-                      }}
-                      className="w-full"
-                    >
-                      Upload Different Image
-                    </Button>
-                  </div>
-                )}
+                <ImageUpload
+                  onImageSelect={handleImageSelect}
+                  onImageRemove={handleImageRemove}
+                  selectedImage={uploadedImage}
+                  isProcessing={isEnhancing}
+                  acceptedFormats={["image/jpeg", "image/png", "image/webp"]}
+                  maxSize={10}
+                />
               </CardContent>
             </Card>
 
@@ -219,89 +192,20 @@ const Enhance = () => {
               </CardHeader>
               
               <CardContent>
-                {!uploadedImage && !isEnhancing && (
-                  <div className="aspect-[16/10] bg-muted/30 rounded-lg border-2 border-dashed border-muted flex items-center justify-center">
-                    <div className="text-center text-muted-foreground">
-                      <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Upload an image to see the enhancement preview</p>
-                    </div>
-                  </div>
-                )}
-
-                {isEnhancing && (
-                  <div className="aspect-[16/10] bg-muted/30 rounded-lg border-2 border-dashed border-primary/50 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                      <p className="text-primary font-medium">Enhancing your image...</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Applying {upscale[0]}x upscaling and adjustments
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {uploadedImage && !isEnhancing && (
-                  <div className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Original */}
-                      <div>
-                        <div className="mb-2 flex items-center justify-between">
-                          <span className="text-sm font-medium">Original</span>
-                          <Badge variant="secondary">512x512</Badge>
-                        </div>
-                        <img 
-                          src={uploadedImage} 
-                          alt="Original"
-                          className="w-full rounded-lg shadow-sm"
-                        />
-                      </div>
-
-                      {/* Enhanced */}
-                      <div>
-                        <div className="mb-2 flex items-center justify-between">
-                          <span className="text-sm font-medium">Enhanced</span>
-                          {enhancedImage && (
-                            <Badge className="bg-primary/10 text-primary">
-                              {512 * upscale[0]}x{512 * upscale[0]}
-                            </Badge>
-                          )}
-                        </div>
-                        {enhancedImage ? (
-                          <div className="relative group">
-                            <img 
-                              src={enhancedImage} 
-                              alt="Enhanced"
-                              className="w-full rounded-lg shadow-sm"
-                            />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                              <Button variant="secondary">
-                                <Download className="w-4 h-4 mr-2" />
-                                Download HD
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="aspect-square bg-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-muted">
-                            <span className="text-muted-foreground text-sm">Enhanced version will appear here</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {enhancedImage && (
-                      <div className="flex gap-4 justify-center">
-                        <Button className="btn-ai-primary">
-                          <Download className="w-4 h-4 mr-2" />
-                          Download Enhanced ({512 * upscale[0]}x{512 * upscale[0]})
-                        </Button>
-                        <Button variant="outline">
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Enhance Again
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <ImageComparison
+                  beforeImage={uploadedImage}
+                  afterImage={enhancedImage}
+                  isProcessing={isEnhancing}
+                  onDownload={() => {
+                    if (enhancedImage) {
+                      const link = document.createElement('a');
+                      link.href = enhancedImage;
+                      link.download = `enhanced-${upscale[0]}x.jpg`;
+                      link.click();
+                    }
+                  }}
+                  onReset={() => setEnhancedImage(null)}
+                />
               </CardContent>
             </Card>
           </div>
